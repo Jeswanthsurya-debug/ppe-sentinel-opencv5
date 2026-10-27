@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PPE//SENTINEL</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a2e;--line:#243049;--ink:#e7ecf5;--mute:#7d8aa5;--ok:#5eead4;--bad:#ff5d6c;--warn:#fbbf24}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1200px 600px at 20% -10%,#16213f,transparent),var(--bg);color:var(--ink);font:15px/1.5 Sora,system-ui,sans-serif;min-height:100vh;padding:20px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:22px;font-weight:600;letter-spacing:.02em;overflow:hidden;white-space:nowrap;width:0;border-right:2px solid var(--ok);animation:type 1.4s steps(13) .2s forwards,blink .8s 3 1.6s}
+h1 i{color:var(--ok);font-style:normal}
+@keyframes type{to{width:13ch;border-color:transparent}}@keyframes blink{50%{border-color:transparent}}
+.sp{flex:1}
+button,input[type=text]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+button{cursor:pointer;transition:border-color .2s,transform .1s}button:hover{border-color:var(--ok)}button:active{transform:scale(.97)}
+button.on{border-color:var(--ok);color:var(--ok)}#go.live{background:var(--bad);border-color:var(--bad);color:#fff}
+:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+#cam{width:100px}
+.steps{display:flex;gap:22px;color:var(--mute);font-size:13px;margin-bottom:14px;flex-wrap:wrap}.steps b{color:var(--ok);margin-right:6px}
+.badge{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:99px;color:var(--mute);font-size:13px}
+.badge b{width:8px;height:8px;border-radius:50%;background:var(--mute)}
+.badge.s3{color:var(--ok);border-color:var(--ok)}.badge.s3 b{background:var(--ok);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #5eead422}}
+main{display:grid;grid-template-columns:1fr 340px;gap:18px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.stage{position:relative;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden;aspect-ratio:16/9}
+video{position:absolute;inset:0;width:100%;height:100%}canvas{position:absolute;inset:0;width:100%;height:100%}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);text-align:center;padding:20px}
+.scan{position:absolute;left:0;right:0;height:80px;top:-80px;background:linear-gradient(transparent,#5eead433,transparent);pointer-events:none}
+.live .scan{animation:sweep 3.2s linear infinite}@keyframes sweep{to{top:100%}}
+.banner{position:absolute;top:12px;left:12px;background:var(--warn);color:#0b1020;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;display:none}
+.cap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:#0b1020ee;border:1px solid var(--ok);padding:10px 18px;border-radius:12px;display:none;max-width:92%;text-align:center}
+.hud{display:flex;gap:20px;margin-top:12px;color:var(--mute);font-size:13px;flex-wrap:wrap}.hud b{color:var(--ink);font-weight:600}
+#msg{margin-top:8px;color:var(--warn);min-height:20px}
+.set{margin-top:10px;display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>span.l{color:var(--mute);font-size:13px;min-width:120px}
+.chip{padding:5px 12px;border-radius:99px;border:1px solid var(--line);cursor:pointer;font-size:13px;color:var(--mute);user-select:none}.chip.on{border-color:var(--ok);color:var(--ok)}
+input[type=range]{accent-color:#5eead4;width:180px}
+.spot{outline:2px solid var(--ok);outline-offset:3px;border-radius:10px;animation:pulse 1.2s infinite}
+aside{display:flex;flex-direction:column;gap:18px}
+.ring{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:18px}
+svg{width:120px;height:120px;transform:rotate(-90deg)}circle{fill:none;stroke-width:9}
+#bg{stroke:var(--line)}#fg{stroke:var(--ok);stroke-linecap:round;stroke-dasharray:326.7;stroke-dashoffset:0;transition:stroke-dashoffset .6s,stroke .4s}
+#sc{font-size:34px;font-weight:600}.ring small{color:var(--mute);display:block}
+.feed{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;flex:1;max-height:520px;overflow:auto}
+.feed h2{font-size:14px;color:var(--mute);font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.feed a{color:var(--ok);font-size:13px;text-decoration:none}.feed a:hover{text-decoration:underline}
+.card{display:flex;gap:12px;padding:8px;border-radius:10px;border:1px solid var(--line);margin-bottom:8px;animation:in .5s ease-out;border-left:3px solid var(--bad)}
+.card img,.ph{width:84px;height:56px;object-fit:cover;border-radius:6px}.ph{background:#1c2742;display:grid;place-items:center;font-size:11px;color:var(--warn)}
+.card small{color:var(--mute);display:block}
+@keyframes in{from{transform:translateX(30px);opacity:0;background:#ff5d6c33}}
+#toast{position:fixed;right:20px;bottom:20px;background:var(--bad);color:#fff;padding:12px 18px;border-radius:10px;transform:translateY(90px);transition:transform .4s;z-index:5}
+#toast.show{transform:none}
+footer{margin-top:18px;color:var(--mute);font-size:12px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}h1{width:auto;border:0}}
+</style></head><body>
+<header>
+ <h1>PPE<i>//</i>SENTINEL</h1><span class="sp"></span>
+ <input id="cam" type="text" value="cam-1" aria-label="Camera name">
+ <button id="src1" class="on">Camera</button><button id="src2">Video file</button>
+ <input id="file" type="file" accept="video/*" hidden>
+ <button id="demo">Try demo</button>
+ <button id="go">Start monitoring</button>
+ <div class="badge" id="cloud"><b></b><span>Local only</span></div>
+</header>
+<div class="steps"><span><b>1</b>Pick a source</span><span><b>2</b>Choose the gear you require</span><span><b>3</b>Start monitoring</span><span><b>4</b>Download logs any time</span></div>
+<main>
+ <section>
+  <div class="stage" id="stage"><video id="v" muted playsinline loop></video><canvas id="o"></canvas>
+   <div class="empty" id="empty">Choose a camera or a video file, then start monitoring.<br>Or press Try demo for a quick tour.</div><div class="scan"></div>
+   <div class="banner" id="banner">DEMO · simulated data · nothing is saved or uploaded</div><div class="cap" id="cap"></div></div>
+  <div class="hud"><span>FPS <b id="fps">0</b></span><span>Latency <b id="ms">0</b> ms</span><span>Workers <b id="wk">0</b></span><span>Motion <b id="mo">0</b>%</span><span>Violations logged <b id="vn">0</b></span></div>
+  <p id="msg" role="status"></p>
+  <div class="set">
+   <div class="row" id="gearrow"><span class="l">Required gear</span><div class="row" id="gear"></div></div>
+   <div class="row"><span class="l">Sensitivity <b id="cf">0.35</b></span><input id="conf" type="range" min="0.15" max="0.7" step="0.05" value="0.35" aria-label="Detection confidence"><small style="color:var(--mute)">lower finds more, higher is stricter</small></div>
+   <div class="row"><span class="l">Alerts</span><div class="row">
+    <span class="chip on" id="tPop" tabindex="0">Pop-up</span><span class="chip" id="tSnd" tabindex="0">Sound</span>
+    <span class="chip on" id="tCloud" tabindex="0">Cloud sync</span><span class="chip" id="tGate" tabindex="0">Pause when scene is still</span></div></div>
+  </div>
+ </section>
+ <aside>
+  <div class="ring"><svg viewBox="0 0 120 120"><circle id="bg" cx="60" cy="60" r="52"/><circle id="fg" cx="60" cy="60" r="52"/></svg>
+   <div><div id="sc">100</div><small>Compliance score</small></div></div>
+  <div class="feed"><h2>Violations <span id="dl"><a href="/export.csv" download>Download CSV</a> · <a href="/export.zip" download>Frames ZIP</a></span></h2><div id="list"></div></div>
+ </aside>
+</main>
+<footer>OpenCV <span id="cvv">-</span> · Saved violation frames blur head and face regions. Always have a person review alerts.</footer>
+<div id="toast" role="alert"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],v=$('#v'),cv=$('#o'),cx=cv.getContext('2d'),grab=document.createElement('canvas');
+let run=false,busy=false,dets=[],fw=640,src='cam',stream=null,seen=new Set(),first=true,target=100,shown=100,frames=0,t0=performance.now(),demo=null,ac=null;
+const on=s=>$(s).classList.contains('on'),msg=t=>$('#msg').textContent=t;
+['Hardhat','Safety Vest','Goggles','Mask','Gloves','Fall alert'].forEach(g=>{const c=document.createElement('span');c.className='chip'+(g=='Hardhat'||g=='Safety Vest'?' on':'');c.textContent=g;c.tabIndex=0;$('#gear').append(c)});
+document.addEventListener('click',e=>{if(e.target.classList.contains('chip'))e.target.classList.toggle('on')});
+document.addEventListener('keydown',e=>{if((e.key=='Enter'||e.key==' ')&&e.target.classList.contains('chip')){e.preventDefault();e.target.click()}});
+$('#conf').oninput=e=>$('#cf').textContent=e.target.value;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+function beep(){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.15)}catch(e){}}
+function alertUser(m){if(on('#tPop'))toast(m);if(on('#tSnd'))beep()}
+function pick(s){src=s;$('#src1').classList.toggle('on',s=='cam');$('#src2').classList.toggle('on',s=='file');if(s=='file')$('#file').click()}
+$('#src1').onclick=()=>pick('cam');$('#src2').onclick=()=>pick('file');
+v.onloadedmetadata=()=>$('#stage').style.aspectRatio=v.videoWidth+'/'+v.videoHeight;
+$('#file').onchange=e=>{if(e.target.files[0]){v.srcObject=null;v.src=URL.createObjectURL(e.target.files[0]);v.play();$('#empty').hidden=true}};
+$('#go').onclick=async()=>{
+ if(demo)return;
+ if(run){run=false;$('#go').textContent='Start monitoring';$('#go').classList.remove('live');$('#stage').classList.remove('live');dets=[];target=100;if(stream)stream.getTracks().forEach(t=>t.stop());return}
+ try{if(src=='cam'){stream=await navigator.mediaDevices.getUserMedia({video:true});v.srcObject=stream;await v.play()}
+  else if(!v.src){msg('Pick a video file first.');return}else v.play();
+  $('#empty').hidden=true;msg('');run=true;busy=false;$('#go').textContent='Stop monitoring';$('#go').classList.add('live');$('#stage').classList.add('live');tick()}
+ catch(e){msg('Camera blocked or unavailable. Allow camera access, or use a video file.')}};
+async function tick(){
+ if(!run)return;
+ if(!busy&&v.videoWidth){busy=true;const s=Math.min(1,640/v.videoWidth);grab.width=v.videoWidth*s;grab.height=v.videoHeight*s;
+  grab.getContext('2d').drawImage(v,0,0,grab.width,grab.height);
+  grab.toBlob(async b=>{try{const f=new FormData();f.append('file',b,'f.jpg');f.append('camera',$('#cam').value||'cam-1');
+   f.append('required',$$('#gear .chip.on').map(c=>c.textContent).join(','));f.append('conf',$('#conf').value);
+   f.append('cloud_on',on('#tCloud')?1:0);f.append('gate',on('#tGate')?1:0);
+   const r=await fetch('/detect_frame',{method:'POST',body:f});if(!r.ok)throw 0;const d=await r.json();
+   $('#mo').textContent=d.motion;$('#ms').textContent=d.ms;
+   if(run&&!d.skipped){dets=d.boxes;fw=d.w;target=d.score;$('#wk').textContent=d.workers;frames++}msg('')}
+   catch(e){msg('Cannot reach the detector. Check that uvicorn is running.')}busy=false},'image/jpeg',.8)}
+ setTimeout(tick,200)}
+/* guided demo: runs on the real UI with simulated data, nothing is saved or uploaded */
+const W=[[[100,100,60,50,'Hardhat',0],[100,170,60,110,'Safety Vest',0]],[[290,100,60,50,'NO-Hardhat',1],[290,170,60,110,'Safety Vest',0]],[[480,100,60,50,'NO-Hardhat',1],[480,170,60,110,'NO-Safety Vest',1]]];
+function scene(k){cx.fillStyle='#101a30';cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle='#16213f';cx.fillRect(0,300*k,cv.width,60*k);
+ [[130,1,1],[320,0,1],[510,0,0]].slice(0,demo.n).forEach(([x,hat,vest])=>{
+  cx.fillStyle='#2a3a63';cx.fillRect((x-28)*k,170*k,56*k,110*k);cx.fillStyle='#1c2742';cx.fillRect((x-24)*k,280*k,20*k,20*k);cx.fillRect((x+4)*k,280*k,20*k,20*k);
+  if(vest){cx.fillStyle='#f59e0b';cx.fillRect((x-20)*k,172*k,40*k,100*k);cx.fillStyle='#fde68a';cx.fillRect((x-20)*k,210*k,40*k,8*k)}
+  cx.fillStyle='#c9a27e';cx.beginPath();cx.arc(x*k,140*k,22*k,0,7);cx.fill();
+  if(hat){cx.fillStyle='#facc15';cx.beginPath();cx.arc(x*k,136*k,24*k,Math.PI,0);cx.fill();cx.fillRect((x-28)*k,135*k,56*k,5*k)}})}
+function cap(m,sel){$$('.spot').forEach(e=>e.classList.remove('spot'));if(sel)$$(sel).forEach(e=>e.classList.add('spot'));$('#cap').textContent=m;$('#cap').style.display='block'}
+function demoCard(types){const c=document.createElement('div');c.className='card demo';c.innerHTML=`<div class="ph">DEMO</div><div><b>${types}</b><small>cam-1 · simulated</small></div>`;$('#list').prepend(c);alertUser('Violation: '+types)}
+function setW(n){demo.n=n;dets=W.slice(0,n).flat().map(([x,y,w,h,name,viol])=>({box:[x,y,w,h],name,conf:(.82+Math.random()*.14).toFixed(2),violation:!!viol}));fw=640}
+function endDemo(){if(!demo)return;demo.t.forEach(clearTimeout);demo=null;dets=[];target=100;$$('.demo').forEach(e=>e.remove());$$('.spot').forEach(e=>e.classList.remove('spot'));
+ $('#banner').style.display=$('#cap').style.display='none';$('#stage').classList.remove('live');$('#go').classList.remove('live');$('#go').textContent='Start monitoring';$('#demo').textContent='Try demo';
+ if(!v.src&&!stream)$('#empty').hidden=false}
+$('#demo').onclick=()=>{
+ if(demo){endDemo();return}
+ if(run){msg('Stop monitoring first, then try the demo.');return}
+ demo={n:0,t:[]};dets=[];target=100;$('#empty').hidden=true;$('#banner').style.display='block';$('#demo').textContent='Skip demo';
+ const at=(s,f)=>demo.t.push(setTimeout(f,s*1000));
+ cap('1 · Pick a source: camera or a video file','#src1,#src2');
+ at(3,()=>cap('2 · Choose the gear you require','#gearrow'));
+ at(6,()=>cap('3 · Press Start monitoring','#go'));
+ at(8,()=>{$('#go').textContent='Stop monitoring';$('#go').classList.add('live');$('#stage').classList.add('live');cap('A worker with the right gear stays green','');setW(1)});
+ at(12,()=>{cap('Missing gear turns red and alerts you instantly','');setW(2);target=75;demoCard('NO-Hardhat')});
+ at(16,()=>{cap('Each violation is logged with a blurred frame','');setW(3);target=50;demoCard('NO-Hardhat, NO-Safety Vest')});
+ at(20,()=>cap('4 · Download the logs as CSV or a ZIP of frames','#dl'));
+ at(23.5,()=>cap('Optional: sync to AWS S3 and send SNS alerts','#cloud,#tCloud'));
+ at(27,()=>cap('Demo finished. Now try it with your camera or a video file.',''));
+ at(30,endDemo)};
+function draw(t){requestAnimationFrame(draw);const st=$('#stage');cv.width=st.clientWidth;cv.height=st.clientHeight;
+ const k=cv.width/fw;cx.clearRect(0,0,cv.width,cv.height);if(demo)scene(cv.width/640);
+ const p=.5+.5*Math.sin(t/160);
+ for(const d of (run||demo?dets:[])){const[x,y,w,h]=d.box.map(n=>n*k),c=d.violation?'#ff5d6c':'#5eead4';
+  cx.strokeStyle=c;cx.fillStyle=c;cx.lineWidth=d.violation?2+p*2:1;cx.shadowColor=c;cx.shadowBlur=d.violation?8+p*16:0;
+  cx.strokeRect(x,y,w,h);cx.shadowBlur=0;cx.font='12px ui-monospace,monospace';cx.fillText(d.name+' '+d.conf,x+2,Math.max(12,y-4))}
+ shown+=(target-shown)*.12;const n=Math.round(shown);const idle=!run&&!demo;$('#sc').textContent=idle?'—':n;
+ $('#fg').style.strokeDashoffset=idle?326.7:326.7*(1-n/100);$('#fg').style.stroke=n>=90?'#5eead4':n>=60?'#fbbf24':'#ff5d6c';
+ const now=performance.now();if(now-t0>1000){$('#fps').textContent=Math.round(frames*1000/(now-t0));frames=0;t0=now}}
+requestAnimationFrame(draw);
+const groups={};
+async function poll(){
+ try{const s=await(await fetch('/status')).json();$('#cvv').textContent=s.cv;const b=$('#cloud');b.classList.toggle('s3',s.cloud);
+  b.querySelector('span').textContent=s.cloud?`S3 synced · ${s.uploaded} uploaded`:'Local only';b.title=s.error||'';if(s.error&&!demo)msg('Cloud error: '+s.error);
+  const ev=await(await fetch('/events')).json();$('#vn').textContent=ev.length;
+  for(const e of ev.slice().reverse()){if(seen.has(e.id))continue;seen.add(e.id);
+   const key=e.types.join(', ');let g=groups[key];
+   if(!g){const c=document.createElement('div');c.className='card';c.innerHTML='<img alt="Violation frame"><div><b></b><small></small></div>';c.querySelector('b').textContent=key;g=groups[key]={c,n:0}}
+   g.n++;g.c.querySelector('img').src='/logs/'+e.id+'.jpg';g.c.querySelector('small').textContent=e.camera+' · '+e.time.slice(11,19)+' · seen '+g.n+'×';
+   $('#list').prepend(g.c);g.c.style.animation='none';void g.c.offsetWidth;g.c.style.animation='';
+   if(!first)alertUser('Violation: '+key)}
+  first=false}catch(e){}
+ setTimeout(poll,2000)}
+poll();
+</script></body></html>
